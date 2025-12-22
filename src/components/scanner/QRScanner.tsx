@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { ScanOverlay } from "@/components/ui/ScanOverlay";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const regionId = "qr-reader-region";
-  const startScanner = async () => {
+  const startScanner = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -49,7 +49,7 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
       setIsLoading(false);
       if (onError) onError(message);
     }
-  };
+  }, [onScanSuccess, onError]);
   useEffect(() => {
     startScanner();
     return () => {
@@ -57,7 +57,7 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
         scannerRef.current.stop().catch((e) => console.warn("Cleanup error:", e));
       }
     };
-  }, []);
+  }, [startScanner]);
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center overflow-hidden">
       <div className="relative w-full h-full flex flex-col items-center justify-center">

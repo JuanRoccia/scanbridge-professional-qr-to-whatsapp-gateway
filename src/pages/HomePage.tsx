@@ -5,13 +5,17 @@ import { generateWhatsAppLink, isValidPhoneNumber, getPhoneInfo } from "@/lib/wh
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Toaster, toast } from "sonner";
-import { QrCode, User, Globe, Mail, Building2, MessageSquare, Info, AlertCircle } from "lucide-react";
+import { QrCode, User, Globe, Mail, Building2, MessageSquare, Info, FlaskConical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 export function HomePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const handleScanSuccess = useCallback((decodedText: string) => {
+  const [isTestMode, setIsTestMode] = useState(false);
+  const processScanResult = useCallback((decodedText: string) => {
     try {
       if (!isValidPhoneNumber(decodedText)) {
         toast.error("Número inválido", {
@@ -25,7 +29,7 @@ export function HomePage() {
         navigator.vibrate(200);
       }
       const country = getPhoneInfo(decodedText);
-      toast.success("¡QR Detectado!", {
+      toast.success(isTestMode ? "Simulación Exitosa" : "¡QR Detectado!", {
         description: `Número de ${country} identificado. Preparando puente...`,
       });
       const link = generateWhatsAppLink(decodedText, cardConfig);
@@ -39,10 +43,23 @@ export function HomePage() {
         description: "Hubo un problema al generar el enlace de WhatsApp.",
       });
     }
-  }, []);
+  }, [isTestMode]);
+  const handleScanSuccess = useCallback((decodedText: string) => {
+    processScanResult(decodedText);
+  }, [processScanResult]);
   const handleScanError = useCallback((errorMessage: string) => {
     console.warn("Scanner Error:", errorMessage);
   }, []);
+  const handleMainAction = () => {
+    if (isTestMode) {
+      toast.info("Iniciando simulación...");
+      setTimeout(() => {
+        processScanResult("+1234567890");
+      }, 800);
+    } else {
+      setIsScanning(true);
+    }
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="py-8 md:py-10 lg:py-12 min-h-screen flex flex-col items-center">
@@ -52,65 +69,84 @@ export function HomePage() {
             <div className="inline-flex items-center justify-center p-3 bg-emerald-100 dark:bg-emerald-950/30 rounded-2xl mb-4">
               <QrCode className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">ScanBridge</h1>
-            <p className="text-muted-foreground font-medium">Puente Profesional a WhatsApp</p>
+            <div className="flex flex-col items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">ScanBridge</h1>
+              <p className="text-muted-foreground font-medium">Puente Profesional a WhatsApp</p>
+              {isTestMode && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 gap-1.5 py-1">
+                  <FlaskConical className="h-3 w-3" /> Modo de Prueba Activo
+                </Badge>
+              )}
+            </div>
           </div>
           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 flex gap-3 items-start">
             <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
             <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-              Escanea códigos QR que contengan un número telefónico con prefijo internacional (ej. +54...) para enviar tu tarjeta automáticamente.
+              Escanea códigos QR que contengan un número telefónico con prefijo internacional para enviar tu tarjeta automáticamente.
             </p>
           </div>
           <Card className="border-none shadow-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md overflow-hidden relative group">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
-            <CardHeader>
+            <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <User className="h-5 w-5 text-emerald-600" />
                 Tu Tarjeta Digital
               </CardTitle>
-              <CardDescription>As�� es como te verán los demás.</CardDescription>
+              <CardDescription>Así es como te verán los demás.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-3">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
                   <Building2 className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Identidad</span>
-                    <span className="text-sm font-bold text-foreground">{cardConfig.name}</span>
-                    <span className="text-xs text-muted-foreground">{cardConfig.title} en {cardConfig.company}</span>
+                    <span className="text-sm font-bold text-foreground truncate">{cardConfig.name}</span>
+                    <span className="text-xs text-muted-foreground truncate">{cardConfig.title} en {cardConfig.company}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
                   <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Contacto</span>
-                    <span className="text-sm text-foreground">{cardConfig.email}</span>
+                    <span className="text-sm text-foreground truncate">{cardConfig.email}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
                   <Globe className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-0">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Sitio Web</span>
                     <span className="text-sm text-foreground truncate">{cardConfig.website}</span>
                   </div>
                 </div>
               </div>
               <div className="pt-2 border-t border-slate-100 dark:border-zinc-800">
-                <p className="text-xs text-muted-foreground italic leading-relaxed line-clamp-2">
+                <p className="text-xs text-muted-foreground italic leading-relaxed line-clamp-3">
                   "{cardConfig.messageTemplate}"
                 </p>
               </div>
             </CardContent>
           </Card>
-          <div className="space-y-4 pt-4">
+          <div className="space-y-6 pt-4">
+            <div className="flex items-center justify-between px-2">
+              <div className="flex flex-col">
+                <Label htmlFor="test-mode" className="text-sm font-medium cursor-pointer">Modo de Prueba</Label>
+                <span className="text-[10px] text-muted-foreground">Simular escaneo sin cámara</span>
+              </div>
+              <Switch 
+                id="test-mode" 
+                checked={isTestMode} 
+                onCheckedChange={setIsTestMode}
+                className="data-[state=checked]:bg-emerald-600"
+              />
+            </div>
             <Button
               size="lg"
               className="w-full h-16 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200/50 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-3"
-              onClick={() => setIsScanning(true)}
+              onClick={handleMainAction}
               disabled={isProcessing}
             >
-              <QrCode className="h-6 w-6" />
-              {isProcessing ? "Redirigiendo..." : "Abrir Escáner"}
+              {isTestMode ? <FlaskConical className="h-6 w-6" /> : <QrCode className="h-6 w-6" />}
+              {isProcessing ? "Redirigiendo..." : isTestMode ? "Simular Escaneo" : "Abrir Escáner"}
             </Button>
             <p className="text-center text-[10px] text-muted-foreground px-4 uppercase tracking-widest font-semibold">
               Desarrollado para redes de contacto profesionales
