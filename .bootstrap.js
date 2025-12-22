@@ -77,15 +77,7 @@ function updateWranglerJsonc() {
 }
 
 function runSetupCommands() {
-    const commands = [
-    "bun add html5-qrcode@^2.3.8",
-    "bun install html5-qrcode",
-    "bun add qrcode.react",
-    "bun install react-dropzone",
-    "bun add html5-qrcode qrcode.react react-dropzone",
-    "bun add react-dropzone uuid framer-motion qrcode.react html5-qrcode",
-    "bun install uuid"
-];
+    const commands = [];
     
     if (commands.length === 0) {
         console.log('⊘ No setup commands to run');
