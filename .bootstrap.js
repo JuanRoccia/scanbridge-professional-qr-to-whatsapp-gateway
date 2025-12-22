@@ -78,7 +78,8 @@ function updateWranglerJsonc() {
 
 function runSetupCommands() {
     const commands = [
-    "bun add html5-qrcode@^2.3.8"
+    "bun add html5-qrcode@^2.3.8",
+    "bun install html5-qrcode"
 ];
     
     if (commands.length === 0) {
