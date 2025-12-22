@@ -51,3 +51,10 @@ export const listCards = (): Card[] => {
 export const deleteCard = (id: string): void => {
   localStorage.removeItem(`${STORAGE_PREFIX}${id}`);
 };
+/**
+ * Returns the most recently created card to be used as the primary sharing card.
+ */
+export const getPrimaryCard = (): Card | null => {
+  const all = listCards();
+  return all.length > 0 ? all[0] : null;
+};

@@ -1,7 +1,7 @@
 import '@/lib/errorReporter';
 import { enableMapSet } from "immer";
 enableMapSet();
-import { StrictMode } from 'react'
+import React, { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   createBrowserRouter,
@@ -14,6 +14,7 @@ import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import { AdminPage } from '@/pages/AdminPage'
 import { CardPage } from '@/pages/CardPage'
+import { ScannerPage } from '@/pages/ScannerPage'
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -29,6 +30,11 @@ const router = createBrowserRouter([
   {
     path: "/card/:id",
     element: <CardPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: "/scan",
+    element: <ScannerPage />,
     errorElement: <RouteErrorBoundary />,
   },
 ]);

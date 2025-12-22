@@ -12,8 +12,12 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const regionId = "qr-reader-region";
+  const regionId = "qr-reader-region-v2"; // Unique ID
   const startScanner = useCallback(async () => {
+    // Prevent double initialization
+    if (scannerRef.current?.isScanning) {
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -31,7 +35,7 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
           onScanSuccess(decodedText);
         },
         () => {
-          // Continuous scanning, ignore common errors
+          // Continuous scanning silently ignores errors
         }
       );
       setIsLoading(false);
@@ -43,7 +47,7 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
       } else if (err.name === "NotFoundError") {
         message = "No se encontró ninguna cámara en este dispositivo.";
       } else if (err.name === "NotReadableError") {
-        message = "La cámara está siendo usada por otra aplicación.";
+        message = "La cámara está bloqueada o en uso por otra aplicación.";
       }
       setError(message);
       setIsLoading(false);
@@ -53,8 +57,14 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
   useEffect(() => {
     startScanner();
     return () => {
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch((e) => console.warn("Cleanup error:", e));
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.isScanning) {
+            scannerRef.current.stop().catch(e => console.warn("Scanner stop failed", e));
+          }
+        } catch (e) {
+          console.error("Cleanup error in QRScanner", e);
+        }
       }
     };
   }, [startScanner]);
@@ -77,9 +87,9 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
             <AlertCircle className="h-16 w-16 text-red-500" />
             <div className="space-y-2">
               <h3 className="text-xl font-bold">Error de Cámara</h3>
-              <p className="text-zinc-400 max-w-xs mx-auto">{error}</p>
+              <p className="text-zinc-400 max-w-xs mx-auto text-sm">{error}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button variant="outline" onClick={onClose} className="border-zinc-700 text-white hover:bg-zinc-800">
                 Cancelar
               </Button>
@@ -94,7 +104,7 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
             <ScanOverlay />
             <div className="absolute bottom-16 text-center text-white px-8 pointer-events-none z-[60]">
               <p className="text-xl font-bold drop-shadow-lg text-emerald-400">Escaneando...</p>
-              <p className="text-sm opacity-90 mt-2 font-medium">Ubica el código QR dentro del marco verde</p>
+              <p className="text-xs opacity-90 mt-2 font-medium">Ubica el código QR dentro del marco verde</p>
             </div>
           </>
         )}

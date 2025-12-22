@@ -2,14 +2,15 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { 
-  ArrowRight, 
-  Upload, 
-  QrCode, 
-  Share2, 
-  ShieldCheck, 
-  Zap, 
-  Smartphone 
+import {
+  ArrowRight,
+  Upload,
+  QrCode,
+  Share2,
+  ShieldCheck,
+  Zap,
+  Smartphone,
+  Camera
 } from "lucide-react";
 import { motion } from "framer-motion";
 export function HomePage() {
@@ -19,14 +20,14 @@ export function HomePage() {
         <ThemeToggle />
         {/* Hero Section */}
         <section className="flex flex-col items-center text-center space-y-6 pt-12 pb-20">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-sm font-medium border border-emerald-200 dark:border-emerald-800"
           >
             <Zap className="h-4 w-4" /> Nueva Era de Networking
           </motion.div>
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -34,26 +35,38 @@ export function HomePage() {
           >
             Transforma tu Imagen <span className="text-emerald-600">Profesional</span>
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="text-lg text-muted-foreground max-w-2xl"
           >
-            Crea, gestiona y comparte tu tarjeta de presentación digital en segundos. Sin aplicaciones pesadas, solo escanea y conecta.
+            Escanea un QR para conectar instantáneamente por WhatsApp o crea tu propia tarjeta digital en segundos.
           </motion.p>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 pt-4"
+            className="flex flex-col sm:flex-row gap-4 pt-4 w-full max-w-md"
           >
-            <Button asChild size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-14 text-lg font-bold gap-2">
-              <Link to="/admin">Empezar Ahora <ArrowRight className="h-5 w-5" /></Link>
+            <Button asChild size="lg" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-14 text-lg font-bold gap-3 shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95">
+              <Link to="/scan">
+                <Camera className="h-6 w-6" /> Escanear QR
+              </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="px-8 h-14 text-lg">
-              <a href="#how-it-works">Saber Más</a>
+            <Button asChild variant="outline" size="lg" className="flex-1 px-8 h-14 text-lg font-medium border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20">
+              <Link to="/admin">Gestionar Mis Tarjetas</Link>
             </Button>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="pt-4"
+          >
+            <Link to="/scan" className="text-xs text-muted-foreground hover:text-emerald-600 font-medium uppercase tracking-widest flex items-center gap-2">
+              ¿No tienes cámara? Prueba el Simulador <ArrowRight className="h-3 w-3" />
+            </Link>
           </motion.div>
         </section>
         {/* How it Works */}
@@ -64,12 +77,12 @@ export function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { icon: Upload, title: "1. Sube tu imagen", desc: "Carga tu tarjeta física actual o un diseño profesional." },
-              { icon: QrCode, title: "2. Genera tu QR", desc: "Creamos un código único que enlaza a tu tarjeta digital." },
-              { icon: Share2, title: "3. Comparte y Conecta", desc: "Muestra tu QR y permite que guarden tu contacto al instante." }
+              { icon: Camera, title: "1. Escanea", desc: "Apunta tu cámara a cualquier código QR de contacto." },
+              { icon: QrCode, title: "2. Personaliza", desc: "Crea tu propia tarjeta digital con tu logo o foto." },
+              { icon: Share2, title: "3. Conecta", desc: "Comparte tu enlace y permite que te contacten por WhatsApp." }
             ].map((step, i) => (
-              <div key={i} className="bg-card p-8 rounded-2xl border shadow-sm flex flex-col items-center text-center space-y-4">
-                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl text-emerald-600">
+              <div key={i} className="bg-card p-8 rounded-3xl border shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md transition-shadow">
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl text-emerald-600">
                   <step.icon className="h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-bold">{step.title}</h3>
@@ -87,21 +100,21 @@ export function HomePage() {
                 <div className="mt-1"><ShieldCheck className="h-6 w-6 text-emerald-600" /></div>
                 <div>
                   <h4 className="font-bold">Privacidad Total</h4>
-                  <p className="text-sm text-muted-foreground">Tus datos se guardan solo en tu navegador. Nada se sube a servidores externos.</p>
+                  <p className="text-sm text-muted-foreground">Tus tarjetas se guardan localmente en tu dispositivo. Tu información es solo tuya.</p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <div className="mt-1"><Smartphone className="h-6 w-6 text-emerald-600" /></div>
                 <div>
                   <h4 className="font-bold">Optimizado para Móvil</h4>
-                  <p className="text-sm text-muted-foreground">Diseño ligero y rápido, perfecto para compartir en ferias o reuniones.</p>
+                  <p className="text-sm text-muted-foreground">PWA-ready: funciona como una aplicación nativa desde tu navegador móvil.</p>
                 </div>
               </div>
               <div className="flex gap-4">
                 <div className="mt-1"><Zap className="h-6 w-6 text-emerald-600" /></div>
                 <div>
                   <h4 className="font-bold">Sin Suscripciones</h4>
-                  <p className="text-sm text-muted-foreground">Herramienta 100% gratuita para profesionales independientes.</p>
+                  <p className="text-sm text-muted-foreground">Herramienta 100% gratuita para profesionales independientes y networking.</p>
                 </div>
               </div>
             </div>
@@ -124,8 +137,8 @@ export function HomePage() {
           <p className="text-sm text-muted-foreground font-medium">ScanBridge &copy; 2024 - Sistema de Tarjetas Digitales</p>
           <div className="flex justify-center gap-6 text-xs text-muted-foreground uppercase tracking-widest">
             <Link to="/" className="hover:text-emerald-600">Inicio</Link>
-            <Link to="/admin" className="hover:text-emerald-600">Panel de Control</Link>
-            <a href="#" className="hover:text-emerald-600">Privacidad</a>
+            <Link to="/admin" className="hover:text-emerald-600">Panel</Link>
+            <Link to="/scan" className="hover:text-emerald-600">Escanear</Link>
           </div>
         </footer>
       </div>
