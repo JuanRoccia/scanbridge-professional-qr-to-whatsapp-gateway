@@ -9,13 +9,42 @@ import { CheckCircle2, Phone, ShieldAlert, FlaskConical, ArrowLeft } from "lucid
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useRef } from "react";
 export function ScannerPage() {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
+  const isProcessingRef = useRef(false);
   const [testMode, setTestMode] = useState(false);
   const [testNumber, setTestNumber] = useState("");
   const handleScanSuccess = useCallback((decodedText: string) => {
-    if (isProcessing) return;
+    if (isProcessingRef.current) return;
+
+    // Check for card QR codes first
+    const lowerText = decodedText.toLowerCase();
+    if (lowerText.startsWith('http') && lowerText.includes('/card/')) {
+      try {
+        const url = new URL(decodedText);
+        const pathname = url.pathname;
+        const pathParts = pathname.split('/').filter(Boolean);
+        const id = pathParts[1]; // /card/{id} -> pathParts[0]="card", pathParts[1]="id"
+        if (id) {
+          setIsProcessing(true);
+          isProcessingRef.current = true;
+          toast.success('Abriendo tarjeta digital...');
+          if ("vibrate" in navigator) {
+            navigator.vibrate(200);
+          }
+          setTimeout(() => {
+            navigate(`/card/${id}`);
+          }, 1500);
+          return;
+        }
+      } catch (err) {
+        console.error("Card URL parsing failed:", err);
+      }
+    }
+
+    // Existing phone number handling
     // Sanitize and validate
     const cleanNumber = decodedText.replace(/\D/g, "");
     if (!isValidPhoneNumber(cleanNumber)) {
@@ -23,6 +52,7 @@ export function ScannerPage() {
       return;
     }
     setIsProcessing(true);
+    isProcessingRef.current = true;
     // Get the card to share (either primary from storage or the one from environment config)
     const primaryCard = getPrimaryCard();
     const sharingConfig = primaryCard ? {
@@ -47,7 +77,13 @@ export function ScannerPage() {
       console.error("WhatsApp Link Generation failed:", err);
       toast.error("Error al generar el enlace de WhatsApp.");
       setIsProcessing(false);
+      isProcessingRef.current = false;
     }
+  }, []);
+
+  // Sync ref with state
+  React.useEffect(() => {
+    isProcessingRef.current = isProcessing;
   }, [isProcessing]);
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center relative overflow-hidden">
@@ -139,9 +175,9 @@ export function ScannerPage() {
               />
             </div>
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold tracking-tight">��Conectado!</h2>
+              <h2 className="text-3xl font-bold tracking-tight">✅ ¡Listo!</h2>
               <p className="text-emerald-400 font-medium flex items-center justify-center gap-2">
-                <Phone className="h-4 w-4" /> Redirigiendo a WhatsApp...
+                <Phone className="h-4 w-4" /> Conectando...
               </p>
             </div>
           </motion.div>
