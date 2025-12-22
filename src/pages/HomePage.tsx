@@ -1,133 +1,153 @@
 import React, { useState, useCallback } from "react";
 import { QRScanner } from "@/components/scanner/QRScanner";
 import { cardConfig } from "@/config/cardConfig";
-import { generateWhatsAppLink } from "@/lib/whatsappUtils";
+import { generateWhatsAppLink, isValidPhoneNumber, getPhoneInfo } from "@/lib/whatsappUtils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Toaster, toast } from "sonner";
-import { QrCode, User, Globe, Mail, Building2, ExternalLink, MessageSquare } from "lucide-react";
+import { QrCode, User, Globe, Mail, Building2, MessageSquare, Info, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 export function HomePage() {
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const handleScanSuccess = useCallback((decodedText: string) => {
-    setIsScanning(false);
-    setIsProcessing(true);
-    // Simulate haptic feedback if available
-    if ("vibrate" in navigator) {
-      navigator.vibrate(200);
+    try {
+      if (!isValidPhoneNumber(decodedText)) {
+        toast.error("Número inválido", {
+          description: "El código QR no contiene un número telefónico válido.",
+        });
+        return;
+      }
+      setIsScanning(false);
+      setIsProcessing(true);
+      if ("vibrate" in navigator) {
+        navigator.vibrate(200);
+      }
+      const country = getPhoneInfo(decodedText);
+      toast.success("¡QR Detectado!", {
+        description: `Número de ${country} identificado. Preparando puente...`,
+      });
+      const link = generateWhatsAppLink(decodedText, cardConfig);
+      setTimeout(() => {
+        window.location.href = link;
+      }, 1500);
+    } catch (error) {
+      setIsProcessing(false);
+      console.error("Scan processing error:", error);
+      toast.error("Error de procesamiento", {
+        description: "Hubo un problema al generar el enlace de WhatsApp.",
+      });
     }
-    toast.success("QR Code Detected!", {
-      description: "Preparing your professional bridge...",
-    });
-    const link = generateWhatsAppLink(decodedText, cardConfig);
-    // Slight delay for visual feedback before redirect
-    setTimeout(() => {
-      window.location.href = link;
-    }, 1200);
+  }, []);
+  const handleScanError = useCallback((errorMessage: string) => {
+    console.warn("Scanner Error:", errorMessage);
   }, []);
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
-      <ThemeToggle />
-      <div className="max-w-md w-full space-y-8 mt-8">
-        {/* Header Section */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-3 bg-emerald-100 dark:bg-emerald-950/30 rounded-2xl mb-4">
-            <QrCode className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="py-8 md:py-10 lg:py-12 min-h-screen flex flex-col items-center">
+        <ThemeToggle />
+        <div className="max-w-md w-full space-y-8 mt-4">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center p-3 bg-emerald-100 dark:bg-emerald-950/30 rounded-2xl mb-4">
+              <QrCode className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">ScanBridge</h1>
+            <p className="text-muted-foreground font-medium">Puente Profesional a WhatsApp</p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">ScanBridge</h1>
-          <p className="text-muted-foreground">Pro QR to WhatsApp Gateway</p>
-        </div>
-        {/* Business Card Preview */}
-        <Card className="border-none shadow-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm overflow-hidden relative group">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-emerald-600" />
-              Your Business Card
-            </CardTitle>
-            <CardDescription>This is what the recipient will receive.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 gap-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Name & Title</span>
-                  <span className="text-sm font-semibold">{cardConfig.name}</span>
-                  <span className="text-xs opacity-80">{cardConfig.title} at {cardConfig.company}</span>
+          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 flex gap-3 items-start">
+            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
+              Escanea códigos QR que contengan un número telefónico con prefijo internacional (ej. +54...) para enviar tu tarjeta automáticamente.
+            </p>
+          </div>
+          <Card className="border-none shadow-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md overflow-hidden relative group">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <User className="h-5 w-5 text-emerald-600" />
+                Tu Tarjeta Digital
+              </CardTitle>
+              <CardDescription>As�� es como te verán los demás.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
+                  <Building2 className="h-5 w-5 text-muted-foreground" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Identidad</span>
+                    <span className="text-sm font-bold text-foreground">{cardConfig.name}</span>
+                    <span className="text-xs text-muted-foreground">{cardConfig.title} en {cardConfig.company}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Contacto</span>
+                    <span className="text-sm text-foreground">{cardConfig.email}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
+                  <Globe className="h-5 w-5 text-muted-foreground" />
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Sitio Web</span>
+                    <span className="text-sm text-foreground truncate">{cardConfig.website}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Contact</span>
-                  <span className="text-sm">{cardConfig.email}</span>
-                </div>
+              <div className="pt-2 border-t border-slate-100 dark:border-zinc-800">
+                <p className="text-xs text-muted-foreground italic leading-relaxed line-clamp-2">
+                  "{cardConfig.messageTemplate}"
+                </p>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Website</span>
-                  <span className="text-sm truncate">{cardConfig.website}</span>
-                </div>
-              </div>
-            </div>
-            <div className="pt-2 border-t border-slate-100 dark:border-zinc-800">
-              <p className="text-xs text-muted-foreground italic leading-relaxed">
-                "{cardConfig.messageTemplate.slice(0, 100)}..."
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        {/* Main Actions */}
-        <div className="space-y-4 pt-4">
-          <Button 
-            size="lg" 
-            className="w-full h-16 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-200 dark:shadow-none transition-all active:scale-95 flex items-center gap-3"
-            onClick={() => setIsScanning(true)}
-            disabled={isProcessing}
-          >
-            <QrCode className="h-6 w-6" />
-            {isProcessing ? "Redirecting..." : "Open Scanner"}
-          </Button>
-          <p className="text-center text-xs text-muted-foreground px-4">
-            Point your camera at any QR code containing a phone number to instantly bridge.
-          </p>
+            </CardContent>
+          </Card>
+          <div className="space-y-4 pt-4">
+            <Button
+              size="lg"
+              className="w-full h-16 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200/50 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-3"
+              onClick={() => setIsScanning(true)}
+              disabled={isProcessing}
+            >
+              <QrCode className="h-6 w-6" />
+              {isProcessing ? "Redirigiendo..." : "Abrir Escáner"}
+            </Button>
+            <p className="text-center text-[10px] text-muted-foreground px-4 uppercase tracking-widest font-semibold">
+              Desarrollado para redes de contacto profesionales
+            </p>
+          </div>
         </div>
       </div>
-      {/* Scanner Overlay */}
       <AnimatePresence>
         {isScanning && (
           <motion.div
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50"
           >
-            <QRScanner 
-              onScanSuccess={handleScanSuccess} 
-              onClose={() => setIsScanning(false)} 
+            <QRScanner
+              onScanSuccess={handleScanSuccess}
+              onClose={() => setIsScanning(false)}
+              onError={handleScanError}
             />
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Processing State */}
       <AnimatePresence>
         {isProcessing && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 z-[100] bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+            className="fixed inset-0 z-[100] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center"
           >
-            <div className="relative">
-              <div className="w-20 h-20 border-4 border-emerald-100 dark:border-emerald-950 border-t-emerald-500 rounded-full animate-spin" />
-              <MessageSquare className="absolute inset-0 m-auto h-8 w-8 text-emerald-500 animate-pulse" />
+            <div className="relative mb-8">
+              <div className="w-24 h-24 border-4 border-emerald-100 dark:border-emerald-950 border-t-emerald-500 rounded-full animate-spin" />
+              <MessageSquare className="absolute inset-0 m-auto h-10 w-10 text-emerald-500 animate-pulse" />
             </div>
-            <h2 className="text-2xl font-bold mt-8 text-foreground">Bridging to WhatsApp</h2>
-            <p className="text-muted-foreground mt-2 max-w-xs">
-              Sending your digital card to the scanned recipient.
+            <h2 className="text-3xl font-bold text-foreground">Conectando...</h2>
+            <p className="text-muted-foreground mt-3 max-w-xs text-lg">
+              Estamos enviando tu tarjeta profesional al destinatario.
             </p>
           </motion.div>
         )}
