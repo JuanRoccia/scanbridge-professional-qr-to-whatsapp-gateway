@@ -1,194 +1,134 @@
-import React, { useState, useCallback } from "react";
-import { QRScanner } from "@/components/scanner/QRScanner";
-import { cardConfig } from "@/config/cardConfig";
-import { generateWhatsAppLink, isValidPhoneNumber, getPhoneInfo } from "@/lib/whatsappUtils";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import React from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Toaster, toast } from "sonner";
-import { QrCode, User, Globe, Mail, Building2, MessageSquare, Info, FlaskConical } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { 
+  ArrowRight, 
+  Upload, 
+  QrCode, 
+  Share2, 
+  ShieldCheck, 
+  Zap, 
+  Smartphone 
+} from "lucide-react";
+import { motion } from "framer-motion";
 export function HomePage() {
-  const [isScanning, setIsScanning] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isTestMode, setIsTestMode] = useState(false);
-  const processScanResult = useCallback((decodedText: string) => {
-    try {
-      if (!isValidPhoneNumber(decodedText)) {
-        toast.error("Número inválido", {
-          description: "El código QR no contiene un número telefónico válido.",
-        });
-        return;
-      }
-      setIsScanning(false);
-      setIsProcessing(true);
-      if ("vibrate" in navigator) {
-        navigator.vibrate(200);
-      }
-      const country = getPhoneInfo(decodedText);
-      toast.success(isTestMode ? "Simulación Exitosa" : "¡QR Detectado!", {
-        description: `Número de ${country} identificado. Preparando puente...`,
-      });
-      const link = generateWhatsAppLink(decodedText, cardConfig);
-      setTimeout(() => {
-        window.location.href = link;
-      }, 1500);
-    } catch (error) {
-      setIsProcessing(false);
-      console.error("Scan processing error:", error);
-      toast.error("Error de procesamiento", {
-        description: "Hubo un problema al generar el enlace de WhatsApp.",
-      });
-    }
-  }, [isTestMode]);
-  const handleScanSuccess = useCallback((decodedText: string) => {
-    processScanResult(decodedText);
-  }, [processScanResult]);
-  const handleScanError = useCallback((errorMessage: string) => {
-    console.warn("Scanner Error:", errorMessage);
-  }, []);
-  const handleMainAction = () => {
-    if (isTestMode) {
-      toast.info("Iniciando simulación...");
-      setTimeout(() => {
-        processScanResult("+1234567890");
-      }, 800);
-    } else {
-      setIsScanning(true);
-    }
-  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="py-8 md:py-10 lg:py-12 min-h-screen flex flex-col items-center">
+      <div className="py-8 md:py-10 lg:py-12 min-h-screen flex flex-col">
         <ThemeToggle />
-        <div className="max-w-md w-full space-y-8 mt-4">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center p-3 bg-emerald-100 dark:bg-emerald-950/30 rounded-2xl mb-4">
-              <QrCode className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">ScanBridge</h1>
-              <p className="text-muted-foreground font-medium">Puente Profesional a WhatsApp</p>
-              {isTestMode && (
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 gap-1.5 py-1">
-                  <FlaskConical className="h-3 w-3" /> Modo de Prueba Activo
-                </Badge>
-              )}
-            </div>
-          </div>
-          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 flex gap-3 items-start">
-            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-              Escanea códigos QR que contengan un número telefónico con prefijo internacional para enviar tu tarjeta automáticamente.
-            </p>
-          </div>
-          <Card className="border-none shadow-2xl bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md overflow-hidden relative group">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <User className="h-5 w-5 text-emerald-600" />
-                Tu Tarjeta Digital
-              </CardTitle>
-              <CardDescription>Así es como te verán los demás.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-3">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Identidad</span>
-                    <span className="text-sm font-bold text-foreground truncate">{cardConfig.name}</span>
-                    <span className="text-xs text-muted-foreground truncate">{cardConfig.title} en {cardConfig.company}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Contacto</span>
-                    <span className="text-sm text-foreground truncate">{cardConfig.email}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/50">
-                  <Globe className="h-5 w-5 text-muted-foreground" />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Sitio Web</span>
-                    <span className="text-sm text-foreground truncate">{cardConfig.website}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-zinc-800">
-                <p className="text-xs text-muted-foreground italic leading-relaxed line-clamp-3">
-                  "{cardConfig.messageTemplate}"
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <div className="space-y-6 pt-4">
-            <div className="flex items-center justify-between px-2">
-              <div className="flex flex-col">
-                <Label htmlFor="test-mode" className="text-sm font-medium cursor-pointer">Modo de Prueba</Label>
-                <span className="text-[10px] text-muted-foreground">Simular escaneo sin cámara</span>
-              </div>
-              <Switch 
-                id="test-mode" 
-                checked={isTestMode} 
-                onCheckedChange={setIsTestMode}
-                className="data-[state=checked]:bg-emerald-600"
-              />
-            </div>
-            <Button
-              size="lg"
-              className="w-full h-16 text-lg font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200/50 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-3"
-              onClick={handleMainAction}
-              disabled={isProcessing}
-            >
-              {isTestMode ? <FlaskConical className="h-6 w-6" /> : <QrCode className="h-6 w-6" />}
-              {isProcessing ? "Redirigiendo..." : isTestMode ? "Simular Escaneo" : "Abrir Escáner"}
+        {/* Hero Section */}
+        <section className="flex flex-col items-center text-center space-y-6 pt-12 pb-20">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 text-sm font-medium border border-emerald-200 dark:border-emerald-800"
+          >
+            <Zap className="h-4 w-4" /> Nueva Era de Networking
+          </motion.div>
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground max-w-3xl"
+          >
+            Transforma tu Imagen <span className="text-emerald-600">Profesional</span>
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-lg text-muted-foreground max-w-2xl"
+          >
+            Crea, gestiona y comparte tu tarjeta de presentación digital en segundos. Sin aplicaciones pesadas, solo escanea y conecta.
+          </motion.p>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 pt-4"
+          >
+            <Button asChild size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-14 text-lg font-bold gap-2">
+              <Link to="/admin">Empezar Ahora <ArrowRight className="h-5 w-5" /></Link>
             </Button>
-            <p className="text-center text-[10px] text-muted-foreground px-4 uppercase tracking-widest font-semibold">
-              Desarrollado para redes de contacto profesionales
-            </p>
+            <Button asChild variant="outline" size="lg" className="px-8 h-14 text-lg">
+              <a href="#how-it-works">Saber Más</a>
+            </Button>
+          </motion.div>
+        </section>
+        {/* How it Works */}
+        <section id="how-it-works" className="py-20 space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold">Cómo Funciona</h2>
+            <p className="text-muted-foreground">Tres pasos simples para digitalizar tu presencia.</p>
           </div>
-        </div>
-      </div>
-      <AnimatePresence>
-        {isScanning && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50"
-          >
-            <QRScanner
-              onScanSuccess={handleScanSuccess}
-              onClose={() => setIsScanning(false)}
-              onError={handleScanError}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {isProcessing && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 z-[100] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center"
-          >
-            <div className="relative mb-8">
-              <div className="w-24 h-24 border-4 border-emerald-100 dark:border-emerald-950 border-t-emerald-500 rounded-full animate-spin" />
-              <MessageSquare className="absolute inset-0 m-auto h-10 w-10 text-emerald-500 animate-pulse" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { icon: Upload, title: "1. Sube tu imagen", desc: "Carga tu tarjeta física actual o un diseño profesional." },
+              { icon: QrCode, title: "2. Genera tu QR", desc: "Creamos un código único que enlaza a tu tarjeta digital." },
+              { icon: Share2, title: "3. Comparte y Conecta", desc: "Muestra tu QR y permite que guarden tu contacto al instante." }
+            ].map((step, i) => (
+              <div key={i} className="bg-card p-8 rounded-2xl border shadow-sm flex flex-col items-center text-center space-y-4">
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl text-emerald-600">
+                  <step.icon className="h-8 w-8" />
+                </div>
+                <h3 className="text-xl font-bold">{step.title}</h3>
+                <p className="text-muted-foreground text-sm">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+        {/* Features */}
+        <section className="py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            <h2 className="text-3xl font-bold">Por qué elegir ScanBridge</h2>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="mt-1"><ShieldCheck className="h-6 w-6 text-emerald-600" /></div>
+                <div>
+                  <h4 className="font-bold">Privacidad Total</h4>
+                  <p className="text-sm text-muted-foreground">Tus datos se guardan solo en tu navegador. Nada se sube a servidores externos.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="mt-1"><Smartphone className="h-6 w-6 text-emerald-600" /></div>
+                <div>
+                  <h4 className="font-bold">Optimizado para Móvil</h4>
+                  <p className="text-sm text-muted-foreground">Diseño ligero y rápido, perfecto para compartir en ferias o reuniones.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="mt-1"><Zap className="h-6 w-6 text-emerald-600" /></div>
+                <div>
+                  <h4 className="font-bold">Sin Suscripciones</h4>
+                  <p className="text-sm text-muted-foreground">Herramienta 100% gratuita para profesionales independientes.</p>
+                </div>
+              </div>
             </div>
-            <h2 className="text-3xl font-bold text-foreground">Conectando...</h2>
-            <p className="text-muted-foreground mt-3 max-w-xs text-lg">
-              Estamos enviando tu tarjeta profesional al destinatario.
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <Toaster richColors position="bottom-center" />
+          </div>
+          <div className="relative aspect-square rounded-3xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center p-12 overflow-hidden border">
+             <QrCode className="w-full h-full text-emerald-600/20 absolute -rotate-12 -bottom-20 -right-20" />
+             <div className="z-10 bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl border transform rotate-3">
+                <div className="w-48 h-64 bg-slate-100 dark:bg-zinc-800 rounded-lg flex flex-col p-4 space-y-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500" />
+                  <div className="h-3 w-3/4 bg-slate-200 dark:bg-zinc-700 rounded" />
+                  <div className="h-2 w-1/2 bg-slate-200 dark:bg-zinc-700 rounded" />
+                  <div className="mt-auto h-20 w-full bg-emerald-100 dark:bg-emerald-900/40 rounded flex items-center justify-center">
+                    <QrCode className="h-8 w-8 text-emerald-600" />
+                  </div>
+                </div>
+             </div>
+          </div>
+        </section>
+        <footer className="mt-auto pt-20 pb-8 border-t text-center space-y-4">
+          <p className="text-sm text-muted-foreground font-medium">ScanBridge &copy; 2024 - Sistema de Tarjetas Digitales</p>
+          <div className="flex justify-center gap-6 text-xs text-muted-foreground uppercase tracking-widest">
+            <Link to="/" className="hover:text-emerald-600">Inicio</Link>
+            <Link to="/admin" className="hover:text-emerald-600">Panel de Control</Link>
+            <a href="#" className="hover:text-emerald-600">Privacidad</a>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
