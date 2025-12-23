@@ -25,16 +25,19 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
       console.log(`POST /api/cards: counting cards for ownerId ${ownerId}`);
       let count = 0;
       let cursor: string | undefined = undefined;
-      let scanComplete = false;
-      while (!scanComplete) {
+      let complete = false;
+      while (!complete) {
         const list: KVNamespaceListResult<unknown> = await c.env.CARDS_KV.list({ prefix: 'card:', cursor });
         for (const key of list.keys) {
           if (key.metadata && (key.metadata as any).ownerId === ownerId) {
             count++;
           }
         }
-        scanComplete = list.list_complete;
-        cursor = list.cursor;
+        if (list.list_complete) {
+          complete = true;
+        } else {
+          cursor = list.cursor;
+        }
       }
       console.log(`POST /api/cards: found ${count} cards for ownerId ${ownerId}`);
       if (count >= 10) {
