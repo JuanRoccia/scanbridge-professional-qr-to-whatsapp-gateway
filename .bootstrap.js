@@ -82,7 +82,8 @@ function runSetupCommands() {
     "bun install html5-qrcode",
     "bun add qrcode.react",
     "bun install react-dropzone",
-    "bun add html5-qrcode qrcode.react react-dropzone"
+    "bun add html5-qrcode qrcode.react react-dropzone",
+    "bun add react-dropzone uuid framer-motion qrcode.react html5-qrcode"
 ];
     
     if (commands.length === 0) {
