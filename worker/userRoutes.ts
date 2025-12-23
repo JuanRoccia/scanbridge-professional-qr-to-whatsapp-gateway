@@ -27,7 +27,7 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
       let cursor: string | undefined = undefined;
       let scanComplete = false;
       while (!scanComplete) {
-        const list = await c.env.CARDS_KV.list({ prefix: 'card:', cursor });
+        const list: KVNamespaceListResult<unknown> = await c.env.CARDS_KV.list({ prefix: 'card:', cursor });
         for (const key of list.keys) {
           if (key.metadata && (key.metadata as any).ownerId === ownerId) {
             count++;
