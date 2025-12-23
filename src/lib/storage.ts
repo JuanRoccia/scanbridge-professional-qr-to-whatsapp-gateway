@@ -3,69 +3,35 @@ export interface Card {
   id: string;
   name: string;
   company: string;
-  imageData: string; // base64
+  imageData: string;
+  ownerId?: string;
   createdAt: number;
 }
-const STORAGE_PREFIX = 'card_';
-const MAX_CARDS = 10;
-export const saveCard = (data: Omit<Card, 'id' | 'createdAt'>): Card => {
-  const cards = listCards();
-  if (cards.length >= MAX_CARDS) {
-    throw new Error(`Límite de ${MAX_CARDS} tarjetas alcanzado. Borra una para continuar.`);
+const CLIENT_ID_KEY = 'sb_client_identity';
+const PRIMARY_CARD_KEY = 'sb_primary_card_id';
+/**
+ * Ensures the browser has a persistent unique ID for linking KV records.
+ */
+export const getClientId = (): string => {
+  let id = localStorage.getItem(CLIENT_ID_KEY);
+  if (!id) {
+    id = uuidv4();
+    localStorage.setItem(CLIENT_ID_KEY, id);
   }
-  const newCard: Card = {
-    ...data,
-    id: uuidv4(),
-    createdAt: Date.now(),
-  };
-  localStorage.setItem(`${STORAGE_PREFIX}${newCard.id}`, JSON.stringify(newCard));
-  return newCard;
-};
-export const getCard = (id: string): Card | null => {
-  if(import.meta.env.DEV) console.log('[STORAGE] getCard called:', id);
-  const item = localStorage.getItem(`${STORAGE_PREFIX}${id}`);
-  if (!item) {
-    if(import.meta.env.DEV) console.log('[STORAGE] getCard null:', id);
-    return null;
-  }
-  try {
-    const card = JSON.parse(item) as Card;
-    if(import.meta.env.DEV) console.log('[STORAGE] getCard loaded:', card.id);
-    return card;
-  } catch (e) {
-    if(import.meta.env.DEV) console.error('[STORAGE] getCard error:', id, e);
-    console.error("Error parsing card data", e);
-    return null;
-  }
-};
-export const listCards = (): Card[] => {
-  const cards: Card[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key?.startsWith(STORAGE_PREFIX)) {
-      const item = localStorage.getItem(key);
-      if (item) {
-        try {
-          cards.push(JSON.parse(item));
-        } catch (e) {
-          console.error("Error parsing card list item", e);
-        }
-      }
-    }
-  }
-  const sortedCards = cards.sort((a, b) => b.createdAt - a.createdAt);
-  if(import.meta.env.DEV) console.log('[STORAGE] listCards:', sortedCards.length, sortedCards.map(c=>c.id));
-  return sortedCards;
-};
-export const deleteCard = (id: string): void => {
-  localStorage.removeItem(`${STORAGE_PREFIX}${id}`);
+  return id;
 };
 /**
- * Returns the most recently created card to be used as the primary sharing card.
+ * Stores the ID of the card the user wants to share via bridge.
  */
-export const getPrimaryCard = (): Card | null => {
-  const all = listCards();
-  const primary = all.length > 0 ? all[0] : null;
-  if(import.meta.env.DEV) console.log('[STORAGE] getPrimaryCard:', primary?.id || 'none');
-  return primary;
+export const setLocalPrimaryCardId = (id: string): void => {
+  localStorage.setItem(PRIMARY_CARD_KEY, id);
 };
+export const getLocalPrimaryCardId = (): string | null => {
+  return localStorage.getItem(PRIMARY_CARD_KEY);
+};
+// Deprecated local storage methods (Keeping stubs for compatibility if needed during migration)
+export const listCards = (): Card[] => [];
+export const getCard = (id: string): Card | null => null;
+export const saveCard = (data: any): any => ({ id: 'migration' });
+export const deleteCard = (id: string): void => {};
+export const getPrimaryCard = (): Card | null => null;
