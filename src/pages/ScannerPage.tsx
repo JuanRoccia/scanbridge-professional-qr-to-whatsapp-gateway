@@ -79,7 +79,7 @@ export function ScannerPage() {
       setIsProcessing(false);
       isProcessingRef.current = false;
     }
-  }, []);
+  }, [navigate]);
 
   // Sync ref with state
   React.useEffect(() => {

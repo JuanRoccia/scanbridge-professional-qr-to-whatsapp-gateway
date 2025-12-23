@@ -12,6 +12,8 @@ import { listCards, deleteCard, saveCard, Card as CardType } from "@/lib/storage
 import { ImageUploader } from "@/components/cards/ImageUploader";
 import { QRGenerator } from "@/components/cards/QRGenerator";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 export function AdminPage() {
   const [cards, setCards] = useState<CardType[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -95,9 +97,9 @@ export function AdminPage() {
                   <QRGenerator cardId={createdCard.id} />
                   <div className="flex gap-4 w-full">
                     <Button variant="outline" className="flex-1" onClick={resetForm}>Volver al Panel</Button>
-                    <Button asChild className="flex-1 bg-emerald-600 hover:bg-emerald-700">
-                      <Link to={`/card/${createdCard.id}`}>Ver Tarjeta</Link>
-                    </Button>
+                    <Link to={`/card/${createdCard.id}`} className={cn(buttonVariants({}), "flex-1 bg-emerald-600 hover:bg-emerald-700")}>
+                      Ver Tarjeta
+                    </Link>
                   </div>
                 </div>
               ) : (
@@ -151,9 +153,9 @@ export function AdminPage() {
                   <div className="aspect-[1.6/1] bg-muted overflow-hidden relative">
                     <img src={card.imageData} alt={card.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button asChild size="sm" className="bg-white text-black hover:bg-white/90">
-                        <Link to={`/card/${card.id}`}><ExternalLink className="h-4 w-4 mr-1" /> Ver</Link>
-                      </Button>
+                      <Link to={`/card/${card.id}`} className={cn(buttonVariants({ size: "sm" }), "bg-white text-black hover:bg-white/90")}>
+                        <ExternalLink className="h-4 w-4 mr-1" /> Ver
+                      </Link>
                       <Button size="sm" variant="destructive" onClick={() => handleDelete(card.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>

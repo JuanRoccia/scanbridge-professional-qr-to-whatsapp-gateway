@@ -22,11 +22,18 @@ export const saveCard = (data: Omit<Card, 'id' | 'createdAt'>): Card => {
   return newCard;
 };
 export const getCard = (id: string): Card | null => {
+  if(import.meta.env.DEV) console.log('[STORAGE] getCard called:', id);
   const item = localStorage.getItem(`${STORAGE_PREFIX}${id}`);
-  if (!item) return null;
+  if (!item) {
+    if(import.meta.env.DEV) console.log('[STORAGE] getCard null:', id);
+    return null;
+  }
   try {
-    return JSON.parse(item) as Card;
+    const card = JSON.parse(item) as Card;
+    if(import.meta.env.DEV) console.log('[STORAGE] getCard loaded:', card.id);
+    return card;
   } catch (e) {
+    if(import.meta.env.DEV) console.error('[STORAGE] getCard error:', id, e);
     console.error("Error parsing card data", e);
     return null;
   }
@@ -46,7 +53,9 @@ export const listCards = (): Card[] => {
       }
     }
   }
-  return cards.sort((a, b) => b.createdAt - a.createdAt);
+  const sortedCards = cards.sort((a, b) => b.createdAt - a.createdAt);
+  if(import.meta.env.DEV) console.log('[STORAGE] listCards:', sortedCards.length, sortedCards.map(c=>c.id));
+  return sortedCards;
 };
 export const deleteCard = (id: string): void => {
   localStorage.removeItem(`${STORAGE_PREFIX}${id}`);
@@ -56,5 +65,7 @@ export const deleteCard = (id: string): void => {
  */
 export const getPrimaryCard = (): Card | null => {
   const all = listCards();
-  return all.length > 0 ? all[0] : null;
+  const primary = all.length > 0 ? all[0] : null;
+  if(import.meta.env.DEV) console.log('[STORAGE] getPrimaryCard:', primary?.id || 'none');
+  return primary;
 };

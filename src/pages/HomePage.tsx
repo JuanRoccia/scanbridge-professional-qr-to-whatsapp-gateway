@@ -1,7 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   ArrowRight,
   Upload,
@@ -49,14 +50,12 @@ export function HomePage() {
             transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 pt-4 w-full max-w-md"
           >
-            <Button asChild size="lg" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-14 text-lg font-bold gap-3 shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95">
-              <Link to="/scan">
-                <Camera className="h-6 w-6" /> Escanear QR
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="flex-1 px-8 h-14 text-lg font-medium border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20">
-              <Link to="/admin">Gestionar Mis Tarjetas</Link>
-            </Button>
+            <Link to="/scan" className={cn(buttonVariants({ size: "lg" }), "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-14 text-lg font-bold gap-3 shadow-lg shadow-emerald-200 dark:shadow-none transition-all active:scale-95")}>
+              <Camera className="h-6 w-6" /> Escanear QR
+            </Link>
+            <Link to="/admin" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "flex-1 px-8 h-14 text-lg font-medium border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/20")}>
+              Gestionar Mis Tarjetas
+            </Link>
           </motion.div>
           <motion.div
             initial={{ opacity: 0 }}

@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { ShareButtons } from "@/components/cards/ShareButtons";
 import { AlertCircle, ArrowLeft, QrCode } from "lucide-react";
 import { motion } from "framer-motion";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 export function CardPage() {
   const { id } = useParams<{ id: string }>();
   const [card, setCard] = useState<Card | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (id) {
-      setCard(getCard(id));
+      const loadedCard = getCard(id);
+      setCard(loadedCard);
     }
     setLoading(false);
   }, [id]);
@@ -30,9 +33,9 @@ export function CardPage() {
           <h1 className="text-2xl font-bold">Tarjeta No Encontrada</h1>
           <p className="text-muted-foreground max-w-xs">El enlace es inválido o la tarjeta ha sido eliminada.</p>
         </div>
-        <Button asChild className="bg-emerald-600">
-          <Link to="/">Volver al Inicio</Link>
-        </Button>
+        <Link to="/" className={cn(buttonVariants({}), "bg-emerald-600")}>
+          Volver al Inicio
+        </Link>
       </div>
     );
   }
@@ -45,27 +48,27 @@ export function CardPage() {
           className="w-full max-w-xl space-y-8"
         >
           <div className="flex items-center justify-between">
-            <Button asChild variant="ghost" size="sm" className="gap-2">
-              <Link to="/admin"><ArrowLeft className="h-4 w-4" /> Panel</Link>
-            </Button>
+            <Link to="/admin" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2")}>
+              <ArrowLeft className="h-4 w-4" /> Panel
+            </Link>
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">ScanBridge</span>
-              <span className="text-[8px] text-muted-foreground">Digital Card ID: {card.id.split('-')[0]}</span>
+              <span className="text-[8px] text-muted-foreground">Digital Card ID: {card?.id?.split('-')[0] || 'N/A'}</span>
             </div>
           </div>
           <div className="relative group">
             <div className="absolute -inset-4 bg-emerald-500/10 blur-2xl rounded-[3rem] opacity-50" />
             <div className="relative overflow-hidden rounded-2xl shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 aspect-[1.6/1]">
-              <img 
-                src={card.imageData} 
-                alt={card.name} 
+              <img
+                src={card.imageData || ''}
+                alt={card.name || 'Card'}
                 className="w-full h-full object-contain"
               />
             </div>
           </div>
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">{card.name}</h1>
-            <p className="text-emerald-600 dark:text-emerald-400 font-medium">{card.company}</p>
+            <h1 className="text-2xl font-bold text-foreground">{card.name || 'N/A'}</h1>
+            <p className="text-emerald-600 dark:text-emerald-400 font-medium">{card.company || ''}</p>
           </div>
         </motion.div>
       </div>
