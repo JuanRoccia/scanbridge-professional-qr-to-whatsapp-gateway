@@ -12,12 +12,10 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const regionId = "qr-reader-region-v2"; // Unique ID
+  const regionId = "qr-reader-region-v2";
   const startScanner = useCallback(async () => {
-    // Prevent double initialization
-    if (scannerRef.current?.isScanning) {
-      return;
-    }
+    // Safety check to prevent dual startup
+    if (scannerRef.current?.isScanning) return;
     setIsLoading(true);
     setError(null);
     try {
@@ -35,7 +33,7 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
           onScanSuccess(decodedText);
         },
         () => {
-          // Continuous scanning silently ignores errors
+          // Continuous scanning: No action needed for frames without QR
         }
       );
       setIsLoading(false);
@@ -57,14 +55,24 @@ export function QRScanner({ onScanSuccess, onClose, onError }: QRScannerProps) {
   useEffect(() => {
     startScanner();
     return () => {
+      // Clean up the scanner instance thoroughly
       if (scannerRef.current) {
-        try {
-          if (scannerRef.current.isScanning) {
-            scannerRef.current.stop().catch(e => console.warn("Scanner stop failed", e));
+        const cleanup = async () => {
+          try {
+            if (scannerRef.current?.isScanning) {
+              await scannerRef.current.stop();
+            }
+            // Optional: clear the container
+            if (scannerRef.current) {
+              scannerRef.current.clear();
+            }
+          } catch (e) {
+            console.warn("Scanner cleanup failed silently", e);
+          } finally {
+            scannerRef.current = null;
           }
-        } catch (e) {
-          console.error("Cleanup error in QRScanner", e);
-        }
+        };
+        cleanup();
       }
     };
   }, [startScanner]);

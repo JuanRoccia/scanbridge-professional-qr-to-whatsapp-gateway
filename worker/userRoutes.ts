@@ -9,7 +9,6 @@ interface Card {
   ownerId: string;
   createdAt: number;
 }
-// Extend Env to include KV binding
 interface Bindings extends Env {
   CARDS_KV: KVNamespace;
 }
@@ -22,7 +21,17 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
       if (!imageData || !ownerId) {
         return c.json({ success: false, error: 'Missing required fields' }, 400);
       }
-      // Simple size validation (roughly 1MB limit for KV values)
+      // Soft limit: 10 cards per owner
+      const list = await c.env.CARDS_KV.list({ prefix: 'card:' });
+      let count = 0;
+      for (const key of list.keys) {
+        if (key.metadata && (key.metadata as any).ownerId === ownerId) {
+          count++;
+        }
+      }
+      if (count >= 10) {
+        return c.json({ success: false, error: 'Límite de 10 tarjetas alcanzado' }, 403);
+      }
       if (imageData.length > 1.2 * 1024 * 1024) {
         return c.json({ success: false, error: 'Imagen demasiado grande (máximo 1MB)' }, 413);
       }
@@ -53,30 +62,53 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
     }
     return c.json({ success: true, data: JSON.parse(data) });
   });
-  // List cards for an owner
+  // List cards for an owner with robust pagination/scanning
   app.get('/api/cards', async (c) => {
     const ownerId = c.req.query('ownerId');
     if (!ownerId) {
       return c.json({ success: false, error: 'ownerId is required' }, 400);
     }
-    // KV list doesn't filter by metadata values easily, so we prefix or fetch all
-    // For this bridge, we list all card keys and filter (Small scale optimization)
-    const list = await c.env.CARDS_KV.list({ prefix: 'card:' });
     const cards: Card[] = [];
-    for (const key of list.keys) {
-      if (key.metadata && (key.metadata as any).ownerId === ownerId) {
-        const val = await c.env.CARDS_KV.get(key.name);
-        if (val) cards.push(JSON.parse(val));
+    let cursor: string | undefined = undefined;
+    let complete = false;
+    // Scan all keys because ownerId is in metadata
+    while (!complete) {
+      const list: KVNamespaceListResult<unknown> = await c.env.CARDS_KV.list({ 
+        prefix: 'card:',
+        cursor 
+      });
+      for (const key of list.keys) {
+        if (key.metadata && (key.metadata as any).ownerId === ownerId) {
+          const val = await c.env.CARDS_KV.get(key.name);
+          if (val) cards.push(JSON.parse(val));
+        }
+      }
+      if (list.list_complete) {
+        complete = true;
+      } else {
+        cursor = list.cursor;
       }
     }
-    return c.json({ 
-      success: true, 
-      data: cards.sort((a, b) => b.createdAt - a.createdAt) 
+    return c.json({
+      success: true,
+      data: cards.sort((a, b) => b.createdAt - a.createdAt)
     });
   });
-  // Delete a card
+  // Secure delete a card
   app.delete('/api/cards/:id', async (c) => {
     const id = c.req.param('id');
+    const ownerId = c.req.query('ownerId');
+    if (!ownerId) {
+      return c.json({ success: false, error: 'No autorizado' }, 401);
+    }
+    // Verify ownership before delete
+    const data = await c.env.CARDS_KV.get(`card:${id}`);
+    if (data) {
+      const card: Card = JSON.parse(data);
+      if (card.ownerId !== ownerId) {
+        return c.json({ success: false, error: 'No tienes permiso para eliminar esta tarjeta' }, 403);
+      }
+    }
     await c.env.CARDS_KV.delete(`card:${id}`);
     return c.json({ success: true });
   });

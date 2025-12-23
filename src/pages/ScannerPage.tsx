@@ -16,10 +16,13 @@ export function ScannerPage() {
   const isProcessingRef = useRef(false);
   const [testMode, setTestMode] = useState(false);
   const [testNumber, setTestNumber] = useState("");
-  // Get the locally preferred primary card ID
   const primaryCardId = getLocalPrimaryCardId();
-  // Fetch its data from API if it exists
   const { data: primaryCard } = useCard(primaryCardId || undefined);
+  // Use a ref for the card data so handleScanSuccess doesn't need to re-run on data change
+  const primaryCardRef = useRef(primaryCard);
+  useEffect(() => {
+    primaryCardRef.current = primaryCard;
+  }, [primaryCard]);
   const handleScanSuccess = useCallback(async (decodedText: string) => {
     if (isProcessingRef.current) return;
     // 1. Check for Card URLs
@@ -28,7 +31,7 @@ export function ScannerPage() {
       try {
         const url = new URL(decodedText);
         const pathParts = url.pathname.split('/').filter(Boolean);
-        const id = pathParts[1]; 
+        const id = pathParts[1];
         if (id) {
           setIsProcessing(true);
           isProcessingRef.current = true;
@@ -49,19 +52,19 @@ export function ScannerPage() {
     }
     setIsProcessing(true);
     isProcessingRef.current = true;
-    // Use primary cloud card data if available, else fallback to environment config
-    const sharingConfig = primaryCard ? {
-      name: primaryCard.name,
-      company: primaryCard.company,
+    // Use the latest ref value to avoid camera restart dependencies
+    const currentPrimaryCard = primaryCardRef.current;
+    const sharingConfig = currentPrimaryCard ? {
+      name: currentPrimaryCard.name,
+      company: currentPrimaryCard.company,
       title: "Profesional",
       email: "",
-      website: `${window.location.origin}/card/${primaryCard.id}`,
+      website: `${window.location.origin}/card/${currentPrimaryCard.id}`,
       messageTemplate: cardConfig.messageTemplate
     } : cardConfig;
     try {
       const waLink = generateWhatsAppLink(cleanNumber, sharingConfig);
       if ("vibrate" in navigator) navigator.vibrate(200);
-      // Delay to show the success state
       setTimeout(() => {
         window.location.href = waLink;
       }, 1800);
@@ -71,7 +74,7 @@ export function ScannerPage() {
       setIsProcessing(false);
       isProcessingRef.current = false;
     }
-  }, [navigate, primaryCard]);
+  }, [navigate]); // Only depends on navigate now
   useEffect(() => {
     isProcessingRef.current = isProcessing;
   }, [isProcessing]);

@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Toaster, toast } from "sonner";
 import { Trash2, ExternalLink, Plus, LayoutDashboard, Image as ImageIcon, CheckCircle2, Loader2 } from "lucide-react";
 import { useCards, useCreateCard, useDeleteCard } from "@/lib/api";
-import { setLocalPrimaryCardId } from "@/lib/storage";
+import { setLocalPrimaryCardId, getLocalPrimaryCardId } from "@/lib/storage";
 import { ImageUploader } from "@/components/cards/ImageUploader";
 import { QRGenerator } from "@/components/cards/QRGenerator";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -35,7 +35,7 @@ export function AdminPage() {
         imageData: imageData
       });
       setCreatedCardId(newCard.id);
-      setLocalPrimaryCardId(newCard.id); // Default newly created as primary
+      setLocalPrimaryCardId(newCard.id); 
       toast.success("Tarjeta guardada en la nube");
     } catch (e: any) {
       toast.error(e.message || "Error al conectar con el servidor");
@@ -45,6 +45,10 @@ export function AdminPage() {
     if (confirm("¿Estás seguro de eliminar esta tarjeta de la nube?")) {
       try {
         await deleteMutation.mutateAsync(id);
+        const currentPrimary = getLocalPrimaryCardId();
+        if (currentPrimary === id) {
+          localStorage.removeItem('sb_primary_card_id');
+        }
         toast.info("Tarjeta eliminada");
       } catch (e: any) {
         toast.error("No se pudo eliminar la tarjeta");
@@ -129,8 +133,8 @@ export function AdminPage() {
                     </div>
                     <div className="pt-4 flex gap-3">
                       <Button variant="ghost" onClick={() => setShowCreate(false)} disabled={createMutation.isPending}>Cancelar</Button>
-                      <Button 
-                        className="bg-emerald-600 hover:bg-emerald-700 flex-1 gap-2" 
+                      <Button
+                        className="bg-emerald-600 hover:bg-emerald-700 flex-1 gap-2"
                         onClick={handleCreate}
                         disabled={createMutation.isPending}
                       >
@@ -172,8 +176,13 @@ export function AdminPage() {
                       <Link to={`/card/${card.id}`} className={cn(buttonVariants({ size: "sm" }), "bg-white text-black hover:bg-white/90 font-bold")}>
                         <ExternalLink className="h-4 w-4 mr-1" /> Ver Online
                       </Link>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(card.id)} disabled={deleteMutation.isPending}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => handleDelete(card.id)} 
+                        disabled={deleteMutation.isPending}
+                      >
+                        {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>

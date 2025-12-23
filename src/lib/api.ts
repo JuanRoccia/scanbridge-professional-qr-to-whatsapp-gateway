@@ -60,7 +60,9 @@ export function useDeleteCard() {
   const ownerId = getClientId();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/${id}?ownerId=${ownerId}`, { 
+        method: 'DELETE' 
+      });
       const json = await res.json();
       if (!json.success) throw new Error(json.error);
     },
