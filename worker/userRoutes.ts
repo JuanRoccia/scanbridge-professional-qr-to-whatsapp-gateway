@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { Env } from './core-utils';
-import { v4 as uuidv4 } from 'uuid';
+
 import type { KVNamespace, KVNamespaceListResult } from '@cloudflare/workers-types';
 interface Card {
   id: string;
@@ -13,6 +13,8 @@ interface Card {
 interface Bindings extends Env {
   CARDS_KV?: KVNamespace;
 }
+
+const mockCards = new Map<string, Card>();
 export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
   // Create a new card
   app.post('/api/cards', async (c) => {
@@ -43,6 +45,9 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
             cursor = list.cursor;
           }
         }
+      } else {
+        count = Array.from(mockCards.values()).filter((c: Card) => c.ownerId === ownerId).length;
+        console.log(`Mock count for ownerId ${ownerId}: ${count}`);
       }
       console.log(`POST /api/cards: found ${count} cards for ownerId ${ownerId}`);
       if (count >= 10) {
@@ -53,8 +58,20 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
       }
       console.log(`POST /api/cards KV available: ${!!kv}`);
       if (!kv) {
-        console.log(`Mock POST /api/cards for ownerId ${ownerId}`);
-        const id = uuidv4();
+        console.log(`Using mockCards, current size: ${mockCards.size}`);
+        let id = crypto.randomUUID();
+        let collision = true;
+        let attempts = 0;
+        while (collision && attempts < 5) {
+          const key = `card:${id}`;
+          if (mockCards.has(key)) {
+            id = crypto.randomUUID();
+            attempts++;
+            console.log(`Mock UUID collision, attempt ${attempts}`);
+          } else {
+            collision = false;
+          }
+        }
         const newCard: Card = {
           id,
           name: name || 'Sin nombre',
@@ -63,10 +80,15 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
           ownerId,
           createdAt: Date.now()
         };
+        mockCards.set(`card:${id}`, newCard);
+        console.log(`Mock POST created card:${id}`);
+        // Verify
+        const verifyCard = mockCards.get(`card:${id}`);
+        console.log(`Mock verify: ${!!verifyCard}`);
         return c.json({ success: true, data: newCard });
       }
       console.log(`POST /api/cards: ownerId ${ownerId}, imageData.length ${imageData.length}, generating id`);
-      let id = uuidv4();
+      let id = crypto.randomUUID();
       // Defensive UUID collision check
       let collision = true;
       let attempts = 0;
@@ -75,7 +97,7 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
         if (!existing) {
           collision = false;
         } else {
-          id = uuidv4();
+          id = crypto.randomUUID();
           attempts++;
           console.log(`POST /api/cards: UUID collision, attempt ${attempts}, new id ${id}`);
         }
@@ -116,7 +138,13 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
       const kv = c.env.CARDS_KV;
       console.log(`GET /api/cards/${id} KV available: ${!!kv}`);
       if (!kv) {
-        return c.json({ success: false, error: 'Tarjeta no encontrada' }, 404);
+        const key = `card:${id}`;
+        const card = mockCards.get(key) as Card | undefined;
+        console.log(`GET mock /api/cards/${id}: ${card ? 'found' : 'null'}`);
+        if (!card) {
+          return c.json({ success: false, error: 'Tarjeta no encontrada' }, 404);
+        }
+        return c.json({ success: true, data: card });
       }
       console.log(`GET /api/cards/${id}: fetching`);
       const data = await kv.get(`card:${id}`);
@@ -141,7 +169,9 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
       const kv = c.env.CARDS_KV;
       console.log(`GET /api/cards KV available: ${!!kv}`);
       if (!kv) {
-        return c.json({ success: true, data: [] });
+        const cards: Card[] = Array.from(mockCards.values()).filter((c: Card) => c.ownerId === ownerId).sort((a, b) => b.createdAt - a.createdAt);
+        console.log(`Mock GET /api/cards for ${ownerId}: found ${cards.length} cards`);
+        return c.json({ success: true, data: cards });
       }
       const cards: Card[] = [];
       let cursor: string | undefined = undefined;
@@ -186,7 +216,17 @@ export function userRoutes(app: Hono<{ Bindings: Bindings }>) {
       const kv = c.env.CARDS_KV;
       console.log(`DELETE /api/cards/${id} KV available: ${!!kv}`);
       if (!kv) {
-        console.log(`Mock DELETE /api/cards/${id}`);
+        const key = `card:${id}`;
+        const card = mockCards.get(key) as Card | undefined;
+        console.log(`Mock DELETE /api/cards/${id}: ${card ? `owner check ${card.ownerId === ownerId}` : 'not found'}`);
+        if (!card) {
+          return c.json({ success: false, error: 'Tarjeta no encontrada' }, 404);
+        }
+        if (card.ownerId !== ownerId) {
+          return c.json({ success: false, error: 'No tienes permiso para eliminar esta tarjeta' }, 403);
+        }
+        mockCards.delete(key);
+        console.log(`Mock DELETE success for ${id}`);
         return c.json({ success: true });
       }
       // Verify ownership before delete
