@@ -1,6 +1,6 @@
 # ScanBridge
 
-[![Deploy to Cloudflare][cloudflarebutton]]
+[![Deploy to Cloudflare][![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/JuanRoccia/scanbridge-professional-qr-to-whatsapp-gateway)]
 
 ScanBridge is a modern fullstack application built with React, Tailwind CSS, and Shadcn/UI, powered by Cloudflare Workers for the backend. It provides a production-ready starter template with routing, state management, theming, error handling, and API integration.
 
@@ -120,7 +120,7 @@ bun run deploy
 
 This builds the app and deploys via Wrangler. Your assets are automatically served from Cloudflare.
 
-[![Deploy to Cloudflare][cloudflarebutton]]
+[![Deploy to Cloudflare][![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/JuanRoccia/scanbridge-professional-qr-to-whatsapp-gateway)]
 
 ### Custom Domain
 1. Deploy and note the worker URL
